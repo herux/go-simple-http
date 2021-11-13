@@ -9,6 +9,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+const AUTH_KEY = "1234567890"
+
 func index(res http.ResponseWriter, req *http.Request) {
 	file, err := os.Open("./templates/index.html")
 	if err != nil {
@@ -23,7 +25,7 @@ func index(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	os.Setenv("AUTH", "1234567890")
+	os.Setenv("AUTH", AUTH_KEY)
 	s := os.Getenv("AUTH")
 	doc.Find("input[name='auth']").SetAttr("value", s)
 	sHtml, _ := doc.Html()
@@ -41,7 +43,20 @@ func upload(res http.ResponseWriter, req *http.Request) {
 	defer file.Close()
 	fmt.Println("file uploaded: ", handler.Filename)
 	fmt.Println("size: ", handler.Size)
-	fmt.Println("header: ", handler.Header)
+	fmt.Println("header: ", handler.Header.Values("Content-Type")[0])
+
+	imageMimeType := "image/jpeg"
+	if handler.Header.Values("Content-Type")[0] != imageMimeType {
+		res.WriteHeader(http.StatusForbidden)
+		res.Write([]byte("Invalid file type"))
+		return
+	}
+
+	if req.FormValue("auth") != AUTH_KEY {
+		res.WriteHeader(http.StatusForbidden)
+		res.Write([]byte("Access denied"))
+		return
+	}
 
 	tempFile, err := ioutil.TempFile("tempfiles", handler.Filename)
 	if err != nil {
