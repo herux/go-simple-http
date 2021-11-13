@@ -4,16 +4,36 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func index(res http.ResponseWriter, req *http.Request) {
-	http.ServeFile(res, req, "./templates/index.html")
+	file, err := os.Open("./templates/index.html")
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+	defer file.Close()
+
+	doc, err := goquery.NewDocumentFromReader(file)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	os.Setenv("AUTH", "1234567890")
+	s := os.Getenv("AUTH")
+	doc.Find("input[name='auth']").SetAttr("value", s)
+	sHtml, _ := doc.Html()
+	res.Write([]byte(sHtml))
 }
 
 func upload(res http.ResponseWriter, req *http.Request) {
 	req.ParseMultipartForm(10 << 20)
 
-	file, handler, err := req.FormFile("file")
+	file, handler, err := req.FormFile("data")
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
