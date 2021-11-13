@@ -7,10 +7,10 @@
 
 <body>
 
-    <form action="/upload">
+    <form action="/upload" method="post" enctype="multipart/form-data">
         <input type="hidden" name="auth"></input>
         <input type="file" name="file"></input>
-        <button type="submit" >Upload</input>
+        <input type="submit">
     </form>
 
 </body>
